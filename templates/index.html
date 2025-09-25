@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game of Thrones Character Matcher</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap');
+
+        :root {
+            --primary-bg: #1a202c;
+            --secondary-bg: #2d3748;
+            --card-bg: rgba(26, 32, 44, 0.75);
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --accent-color: #c59d5f; /* Gold color */
+            --border-color: #4a5568;
+        }
+
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            color: var(--text-primary);
+            background-color: transparent; 
+        }
+
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: url("{{ url_for('static', filename='images/background.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-color: rgba(0, 0, 0, 0.6);
+            /* --- NEW: Reduced Blur --- */
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        
+        .title-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        /* --- NEW: More Contrasty Text Style --- */
+        .title-header h1 {
+            font-size: 4rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: 4px;
+            color: #c5ab78; 
+            text-shadow: 
+                0px 4px 4px rgba(0, 0, 0, 1), /* Sharper, darker shadow */
+                0px 0px 10px rgba(255, 190, 0, 0.7), /* More intense, focused glow */
+                0 0 18px rgba(255, 165, 0, 0.5); /* Wider orange glow */
+            transition: all 0.3s ease-in-out;
+        }
+        
+        /* --- NEW: Darker Glow Hover Effect --- */
+        .title-header h1:hover {
+            color: #a88a53; /* Darker text color on hover */
+            text-shadow: 
+                0px 4px 4px rgba(0, 0, 0, 1),
+                0px 0px 25px rgba(255, 140, 0, 0.9), /* Intense fiery orange glow */
+                0 0 40px rgba(255, 100, 0, 0.7); /* Wider fiery glow */
+        }
+
+        .title-header h2 {
+            font-size: 1.25rem;
+            font-weight: 400;
+            margin: 0.5rem 0 2rem 0;
+            color: var(--text-primary);
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+        }
+
+        .form-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            width: 100%;
+            max-width: 600px;
+            justify-content: center;
+        }
+
+        select {
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--secondary-bg);
+            color: var(--text-primary);
+            font-family: 'Cinzel', serif;
+            transition: all 0.3s ease;
+            padding: 0.8rem 1rem;
+            font-size: 1rem;
+            flex-grow: 1;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #a88a53;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1rem;
+            font-family: 'Cinzel', serif;
+            background-image: linear-gradient(to bottom, #a57c1b, #6d510f);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.6);
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background-image: linear-gradient(to bottom, #b8860b, #8b6914);
+            transform: translateY(-2px);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 4px 8px rgba(0,0,0,0.5);
+            color: #fff;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .character-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .character-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+        
+        .card-title.accent {
+            color: var(--accent-color);
+        }
+
+        .character-image {
+            width: 100%;
+            max-width: 250px;
+            height: 300px;
+            margin: 0 auto 1.5rem auto;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 3px solid var(--border-color);
+            background-color: var(--primary-bg);
+        }
+        
+        .character-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+        }
+
+        .character-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            .title-header h1 {
+                font-size: 2.5rem;
+            }
+             .title-header h2 {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-container"></div>
+    <div class="backdrop"></div>
+    <div class="container">
+        <header class="title-header">
+            <h1>GAME OF THRONES</h1>
+            <h2>CHARACTER MATCHER</h2>
+        </header>
+
+        <form action="/match" method="post" class="form-container">
+            <select name="character" id="character-select">
+                <option value="">-- Select a Character --</option>
+                {% for char in characters %}
+                <option value="{{ char }}">{{ char }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn">Find Match</button>
+        </form>
+
+        {% if selected_char and matched_char %}
+        <div class="results-grid">
+            <div class="character-card">
+                <h3 class="card-title">YOU SELECTED</h3>
+                <div class="character-image">
+                    {% if 'http' in selected_char.image_url %}
+                        <img src="{{ selected_char.image_url }}" alt="Image of {{ selected_char.character }}">
+                    {% else %}
+                        <img src="{{ url_for('static', filename=selected_char.image_url) }}" alt="Image of {{ selected_char.character }}">
+                    {% endif %}
+                </div>
+                <p class="character-name">{{ selected_char.character }}</p>
+            </div>
+            <div class="character-card">
+                <h3 class="card-title accent">MOST SIMILAR CHARACTER</h3>
+                <div class="character-image">
+                     {% if 'http' in matched_char.image_url %}
+                        <img src="{{ matched_char.image_url }}" alt="Image of {{ matched_char.character }}">
+                    {% else %}
+                        <img src="{{ url_for('static', filename=matched_char.image_url) }}" alt="Image of {{ matched_char.character }}">
+                    {% endif %}
+                </div>
+                <p class="character-name">{{ matched_char.character }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
+
