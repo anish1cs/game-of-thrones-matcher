@@ -64,4 +64,8 @@ Sentence Embeddings: The pre-trained all-MiniLM-L6-v2 model from the Sentence-Tr
 
 Similarity Calculation: Cosine similarity is calculated between all character vectors to create a similarity matrix. A score of 1 means identical dialogue, and 0 means completely different.
 
+<<<<<<< HEAD
 Matching: When a user selects a character, the application looks up this pre-computed matrix to find the character with the highest similarity score.
+=======
+Matching: When a user selects a character, the application looks up this pre-computed matrix to find the character with the highest similarity score.
+>>>>>>> ce0bc7d088206d5ede3834c658c7206ec9413c04
