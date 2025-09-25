@@ -6,3 +6,4 @@ nltk
 sentence-transformers
 torch
 transformers
+gunicorn
