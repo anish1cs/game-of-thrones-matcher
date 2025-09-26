@@ -8,9 +8,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 def setup_nltk():
-    """
-    Checks for NLTK 'wordnet' resource and downloads it if missing.
-    """
+    """Checks for NLTK 'wordnet' resource and downloads it if missing."""
     try:
         nltk.data.find('corpora/wordnet')
     except LookupError:
@@ -20,9 +18,7 @@ def setup_nltk():
 
 
 def build_model():
-    """
-    The main function to build the model, now using only local images.
-    """
+    """The main function to build the model, now also saving the raw embeddings."""
     print("Starting ADVANCED model building process...")
     setup_nltk()
 
@@ -47,7 +43,7 @@ def build_model():
         lambda text: ' '.join([lemmatizer.lemmatize(word) for word in text.split()])
     )
 
-    # --- Step 3: Build local image paths (NO DOWNLOAD) ---
+    # --- Step 3: Build local image paths ---
     print("Step 3: Building local image paths...")
     final_characters_data = []
     placeholder_image = 'https://placehold.co/150x150/2d3748/e0e0e0?text=No+Image'
@@ -56,12 +52,9 @@ def build_model():
         clean_name = re.sub(r'[\s-]+', '_', char).lower() + '.jpg'
         local_image_path = os.path.join('static', 'images', clean_name)
         
-        # This is the new, simpler logic:
-        # If the local file exists, use its web path. Otherwise, use the placeholder.
         if os.path.exists(local_image_path):
             image_url = os.path.join('images', clean_name).replace('\\', '/')
         else:
-            print(f"Warning: Local image not found for '{char}'. Using placeholder.")
             image_url = placeholder_image
             
         final_characters_data.append({'character': char, 'image_url': image_url})
@@ -69,19 +62,24 @@ def build_model():
     final_df = pd.DataFrame(final_characters_data)
     
     # --- Step 4: Generate Sentence Embeddings ---
-    print("Step 4: Generating sentence embeddings (this may take a moment)...")
+    print("\nStep 4: Generating sentence embeddings...")
     model = SentenceTransformer('all-MiniLM-L6-v2')
     embeddings = model.encode(processed_df['lemmatized_dialogue'].tolist(), show_progress_bar=True)
 
-    # --- Step 5: Calculate Similarity ---
-    print("Step 5: Calculating cosine similarity...")
+    # --- Step 5: Calculate and Save Similarity Matrix (for dropdown) ---
+    print("Step 5: Calculating and saving cosine similarity matrix...")
     similarity_matrix = cosine_similarity(embeddings)
-
-    # --- Step 6: Save the final files ---
-    print("Step 6: Saving model files...")
-    pickle.dump(final_df, open('characters.pkl', 'wb'))
     pickle.dump(similarity_matrix, open('similarity.pkl', 'wb'))
-    print("\nModel building complete! 'characters.pkl' and 'similarity.pkl' have been created.")
+
+    # --- NEW: Step 6: Save the Raw Embeddings (for text description) ---
+    print("Step 6: Saving character embeddings...")
+    pickle.dump(embeddings, open('embeddings.pkl', 'wb'))
+    
+    # --- Step 7: Save the final character data ---
+    print("Step 7: Saving final character data...")
+    pickle.dump(final_df, open('characters.pkl', 'wb'))
+    
+    print("\nModel building complete! 'characters.pkl', 'similarity.pkl', and 'embeddings.pkl' have been created.")
 
 
 if __name__ == '__main__':
